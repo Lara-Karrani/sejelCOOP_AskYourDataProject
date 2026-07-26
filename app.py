@@ -285,4 +285,3 @@ if st.button("Ask", type="primary") and question.strip():
             "Look at the SQL above. Claude may have used the wrong column "
             "or misunderstood the question."
         )
-        
