@@ -25,7 +25,7 @@ DB_FILE = "askyourdata.db"
 # The API key is read from Streamlit secrets so it never lives in the code.
 client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
-"LK"
+#LK
 def get_schema_text():
     """
     Return a detailed description of the database:
@@ -131,8 +131,8 @@ def get_schema_text():
 
     finally:
         conn.close()
-"LK"
-"LK"
+#LK
+#LK
 def generate_sql(question, schema):
     """Ask Claude to turn a plain-English question into one SQLite query."""
 
@@ -372,25 +372,3 @@ if st.button("Ask", type="primary") and question.strip():
             "Look at the SQL above. Claude may have used the wrong column "
             "or misunderstood the question."
         )
-
-if st.button("Test Claude"):
-    try:
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=20,
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Reply only: Connected",
-                }
-            ],
-        )
-
-        st.success(response.content[0].text)
-
-    except Exception as error:
-        st.error(f"Claude connection failed: {error}")
-
-
-
-        
