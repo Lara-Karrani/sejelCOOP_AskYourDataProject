@@ -6,8 +6,8 @@ checks that the query is safe, runs it against the sample transportation
 database, and shows both the answer and the SQL that produced it.
 
 HOW TO RUN
-  1. python create_database.py
-     (only needed once -- creates transport.db)
+  1. python create_askyourdata_database.py
+     (only needed once -- creates askyourdata.db)
 
   2. streamlit run app.py
 """
@@ -20,7 +20,7 @@ import streamlit as st
 from anthropic import Anthropic
 
 
-DB_FILE = "transport.db"
+DB_FILE = "askyourdata.db"
 
 # The API key is read from Streamlit secrets so it never lives in the code.
 client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
@@ -210,7 +210,7 @@ try:
 
 except sqlite3.Error:
     st.error(
-        "transport.db was not found. Run `python create_database.py` first."
+        "askyourdata.db was not found. Run `python create_database.py` first."
     )
     st.stop()
 
