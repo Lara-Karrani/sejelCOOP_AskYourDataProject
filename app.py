@@ -279,36 +279,67 @@ def can_draw_bar_chart(results):
 # Streamlit page
 # ----------------------------------------------------------------------------
 
+import streamlit as st
 st.set_page_config(
     page_title="Ask Your Transportation Data",
     page_icon="🚌",
     layout="wide",
 )
 
+#TF
+
+#Home page
 st.title("🚌 Ask your transportation data")
 
 st.caption(
-    "Ask questions about the fake Hajj and Umrah transportation database "
-    "in plain English."
+    "Explore transportation companies, buses, drivers, and tickets by asking questions"
+    "in plain English with no SQL knowledge required."
 )
 
-try:
-    schema = get_schema_text()
+st.write("\n\n\n")
 
-except sqlite3.Error:
-    st.error(
-        "askyourdata.db was not found. Run `python create_database.py` first."
+
+#Cards
+bus_card, driver_card, ticket_card, company_card = st.columns(4)
+
+with bus_card:
+    st.metric(
+        "🚌Buses",
+        "؟"
     )
-    st.stop()
 
+with driver_card:
+    st.metric(
+        "👨‍✈️Drivers",
+        "؟"
+    )
+
+with ticket_card:
+    st.metric(
+        "🎫Tickets",
+        "؟"
+    )
+
+with company_card:
+    st.metric(
+        "🏢Companies",
+        "؟"
+    )
+
+st.divider()
+
+if st.button("Start Asking"):
+    st.switch_page("pages/Ask.py")
+
+
+#TF
 
 with st.expander("What can I ask about?"):
     st.write(
         "The database contains transportation companies, buses, drivers, "
         "and tickets."
     )
-    st.code(schema)
-
+    
     st.markdown(
         """
 Example questions:
@@ -324,51 +355,7 @@ Example questions:
     )
 
 
-question = st.text_input(
-    "Your question",
-    placeholder="e.g. Which company has the most active buses?",
-)
 
 
-if st.button("Ask", type="primary") and question.strip():
-    try:
-        with st.spinner("Thinking..."):
-            sql = generate_sql(question.strip(), schema)
+        
 
-        st.subheader("The SQL query")
-        st.code(sql, language="sql")
-
-        if not is_safe(sql):
-            st.error(
-                "The query was blocked because it was not a safe, "
-                "read-only SELECT query."
-            )
-
-        else:
-            results = run_query(sql)
-
-            st.subheader("Answer")
-
-            if results.empty:
-                st.info("The query ran successfully, but no matching data was found.")
-
-            else:
-                st.dataframe(
-                    results,
-                    use_container_width=True,
-                    hide_index=True,
-                )
-
-                if can_draw_bar_chart(results):
-                    first_column = results.columns[0]
-                    chart_data = results.set_index(first_column)
-
-                    st.subheader("Chart")
-                    st.bar_chart(chart_data)
-
-    except Exception as error:
-        st.error(f"The query did not run. Error: {error}")
-        st.info(
-            "Look at the SQL above. Claude may have used the wrong column "
-            "or misunderstood the question."
-        )
