@@ -25,9 +25,12 @@ DB_FILE = "askyourdata.db"
 # The API key is read from Streamlit secrets so it never lives in the code.
 client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
-
+"LK"
 def get_schema_text():
-    """Return a plain-text description of the database tables and columns."""
+    """
+    Return a detailed description of the database:
+    tables, columns, foreign keys, and sample values.
+    """
 
     conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
 
@@ -42,52 +45,136 @@ def get_schema_text():
             """
         ).fetchall()
 
-        lines = []
+        database_context = []
 
         for (table_name,) in tables:
+            database_context.append(f"\nTABLE: {table_name}")
+
+            # Read columns and their types
             columns = conn.execute(
                 f'PRAGMA table_info("{table_name}")'
             ).fetchall()
 
-            column_names = ", ".join(column[1] for column in columns)
-            lines.append(f"{table_name}({column_names})")
+            database_context.append("COLUMNS:")
 
-        return "\n".join(lines)
+            for column in columns:
+                column_name = column[1]
+                column_type = column[2] or "UNKNOWN"
+                is_primary_key = column[5] == 1
+
+                description = f"- {column_name} {column_type}"
+
+                if is_primary_key:
+                    description += " PRIMARY KEY"
+
+                database_context.append(description)
+
+            # Read foreign-key relationships
+            foreign_keys = conn.execute(
+                f'PRAGMA foreign_key_list("{table_name}")'
+            ).fetchall()
+
+            if foreign_keys:
+                database_context.append("RELATIONSHIPS:")
+
+                for foreign_key in foreign_keys:
+                    referenced_table = foreign_key[2]
+                    local_column = foreign_key[3]
+                    referenced_column = foreign_key[4]
+
+                    database_context.append(
+                        f"- {table_name}.{local_column} references "
+                        f"{referenced_table}.{referenced_column}"
+                    )
+
+            # Read a few sample values from text columns
+            text_columns = [
+                column[1]
+                for column in columns
+                if "CHAR" in (column[2] or "").upper()
+                or "TEXT" in (column[2] or "").upper()
+            ]
+
+            sample_lines = []
+
+            for column_name in text_columns[:5]:
+                try:
+                    values = conn.execute(
+                        f"""
+                        SELECT DISTINCT "{column_name}"
+                        FROM "{table_name}"
+                        WHERE "{column_name}" IS NOT NULL
+                          AND TRIM(CAST("{column_name}" AS TEXT)) != ''
+                        LIMIT 5
+                        """
+                    ).fetchall()
+
+                    clean_values = [
+                        str(value[0])
+                        for value in values
+                        if value[0] is not None
+                    ]
+
+                    if clean_values:
+                        sample_lines.append(
+                            f"- {column_name}: {clean_values}"
+                        )
+
+                except sqlite3.Error:
+                    pass
+
+            if sample_lines:
+                database_context.append("SAMPLE VALUES:")
+                database_context.extend(sample_lines)
+
+        return "\n".join(database_context)
 
     finally:
         conn.close()
-
-
+"LK"
+"LK"
 def generate_sql(question, schema):
     """Ask Claude to turn a plain-English question into one SQLite query."""
 
     prompt = f"""
-You are an expert SQLite data analyst.
+You are the SQL generation engine for an application called Ask Your Data.
 
-The database contains FAKE sample data about Hajj and Umrah transportation
-companies, buses, drivers, and tickets.
+Your job is to convert a user's plain-English question into exactly one
+valid SQLite SELECT query.
 
-Database schema:
+<database_information>
 {schema}
+</database_information>
 
-User question:
+<user_question>
 {question}
+</user_question>
 
-Write exactly one SQLite query that answers the user's question.
+<important_rules>
+1. Return only the SQL query.
+2. Do not return explanations.
+3. Do not use Markdown or code fences.
+4. Generate exactly one read-only SELECT query.
+5. Use only tables and columns listed in the database information.
+6. Never invent a table, column, relationship, or value.
+7. Use the sample values exactly as stored in the database.
+8. Use JOIN conditions based on the listed relationships.
+9. Use COUNT(DISTINCT column) when joins could create duplicate records.
+10. Use SQLite-compatible syntax only.
+11. Give output columns clear English aliases.
+12. For questions containing "each company", group the results by company.
+13. For "highest", "largest", or "most", sort descending and use LIMIT 1
+    unless the user asks for multiple results.
+14. For "lowest", "smallest", or "least", sort ascending and use LIMIT 1.
+15. For detailed record questions, return useful identifying columns rather
+    than SELECT * when possible.
+16. If the requested information cannot be answered using the supplied
+    schema, return:
+    SELECT 'The requested information is not available in the database.'
+    AS message;
+</important_rules>
 
-Rules:
-- Return ONLY the SQL query.
-- Do not include explanations.
-- Do not include Markdown or backticks.
-- The query must be a read-only SELECT statement.
-- Use only the tables and columns shown in the schema.
-- Never invent table names or column names.
-- Use JOINs when information is needed from multiple tables.
-- Use SQLite-compatible syntax only.
-- Use clear column aliases.
-- Use COUNT(DISTINCT ...) when duplicate rows could affect a count.
-- For questions about companies, include company_name when useful.
-- For status questions, use the exact text values stored in the database.
+Generate the SQL query now.
 """
 
     response = client.messages.create(
@@ -285,3 +372,25 @@ if st.button("Ask", type="primary") and question.strip():
             "Look at the SQL above. Claude may have used the wrong column "
             "or misunderstood the question."
         )
+
+if st.button("Test Claude"):
+    try:
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=20,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Reply only: Connected",
+                }
+            ],
+        )
+
+        st.success(response.content[0].text)
+
+    except Exception as error:
+        st.error(f"Claude connection failed: {error}")
+
+
+
+        
