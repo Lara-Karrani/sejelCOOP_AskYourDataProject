@@ -123,10 +123,11 @@ def get_schema_text():
         conn.close()
 #LK
 #LK
-def generate_sql(question, schema, conversation_history=None):
-    """Ask Claude to turn a plain-English question into one SQLite query,
+def generate_sql(question, schema, conversation_history=False):
+    """Ask Claude to turn a plain-English question into one S
+    QLite query,
     taking into account previous questions in the conversation for refinement."""
-
+ 
     #LF
     history_text = ""
     if conversation_history:
@@ -134,7 +135,7 @@ def generate_sql(question, schema, conversation_history=None):
         for i, past_question in enumerate(conversation_history, 1):
             history_text += f"{i}. {past_question}\n"
         history_text += "</conversation_history>\n"
-
+        
     prompt = f"""
 You are the SQL generation engine for an application called Ask Your Data.
 
@@ -145,11 +146,8 @@ valid SQLite SELECT query.
 {schema}
 </database_information>
 
-#LF
 {history_text}
-<user_question>
 
-<user_question>
 {question}
 </user_question>
 
