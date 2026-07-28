@@ -8,7 +8,8 @@ from anthropic import Anthropic
 
 
 DB_FILE = "askyourdata.db"
-
+print("Backend loaded from:", __file__)
+print("Database file:", DB_FILE)
 # The API key is read from Streamlit secrets so it never lives in the code.
 client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
@@ -337,12 +338,19 @@ def get_total_tickets():
         conn.close()
 
 
-def get_total_companies():
-    conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
+"""def get_total_companies():
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
+<<<<<<< HEAD
         cursor.execute("SELECT COUNT(*) FROM transportation_companies")
+=======
+        cursor.execute(
+            "SELECT COUNT(*) FROM transportation_companies"
+        )
+>>>>>>> origin/database-backend
         return cursor.fetchone()[0]
+
     finally:
-        conn.close()
+        conn.close()"""
