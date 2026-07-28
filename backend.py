@@ -285,3 +285,51 @@ def can_draw_bar_chart(results):
 
     return first_is_text and second_is_number
 #Lk
+
+# ===========================
+# Dashboard Statistics
+# =========================== 
+# Lk
+
+def get_total_buses():
+    conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM buses")
+        return cursor.fetchone()[0]
+    finally:
+        conn.close()
+
+
+def get_total_drivers():
+    conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM drivers")
+        return cursor.fetchone()[0]
+    finally:
+        conn.close()
+
+
+def get_total_tickets():
+    conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM tickets")
+        return cursor.fetchone()[0]
+    finally:
+        conn.close()
+
+
+def get_total_companies():
+    conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM companies")
+        return cursor.fetchone()[0]
+    finally:
+        conn.close()
