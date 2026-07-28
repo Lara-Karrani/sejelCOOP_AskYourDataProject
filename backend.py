@@ -122,8 +122,17 @@ def get_schema_text():
         conn.close()
 #LK
 #LK
-def generate_sql(question, schema):
-    """Ask Claude to turn a plain-English question into one SQLite query."""
+def generate_sql(question, schema, conversation_history=None):
+    """Ask Claude to turn a plain-English question into one SQLite query,
+    taking into account previous questions in the conversation for refinement."""
+
+    #LF
+    history_text = ""
+    if conversation_history:
+        history_text = "\n<conversation_history>\n"
+        for i, past_question in enumerate(conversation_history, 1):
+            history_text += f"{i}. {past_question}\n"
+        history_text += "</conversation_history>\n"
 
     prompt = f"""
 You are the SQL generation engine for an application called Ask Your Data.
@@ -134,6 +143,10 @@ valid SQLite SELECT query.
 <database_information>
 {schema}
 </database_information>
+
+#LF
+{history_text}
+<user_question>
 
 <user_question>
 {question}
@@ -329,7 +342,7 @@ def get_total_companies():
 
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM companies")
+        cursor.execute("SELECT COUNT(*) FROM transportation_companies")
         return cursor.fetchone()[0]
     finally:
         conn.close()
