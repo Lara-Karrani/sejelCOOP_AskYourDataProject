@@ -1,6 +1,8 @@
 #Asking Page
 #TF
 import streamlit as st
+import sqlite3
+from backend import get_schema_text, generate_sql, is_safe, run_query
 
 st.title("🤖Ask Your Data")
 
@@ -39,7 +41,7 @@ if chart:
     selected_outputs.append("chart")
 if summary:
     selected_outputs.append("summary")
-
+#TF
 #Ask Button
 if st.button("ASK", type="primary"):
 
@@ -50,7 +52,28 @@ if st.button("ASK", type="primary"):
         st.warning("Please select at least one output type.")
 
     else:
-        st.session_state.question = question
-        st.session_state.outputs = selected_outputs
-        st.switch_page("pages/Results.py")
-#TF
+        try:
+            with st.spinner("Generating and running your query..."):
+
+                schema = get_schema_text()
+                generated_sql = generate_sql(question, schema)
+
+                if not is_safe(generated_sql):
+                    st.error("The generated query was rejected for safety.")
+                    st.stop()
+
+                results = run_query(generated_sql)
+
+                st.session_state.question = question
+                st.session_state.outputs = selected_outputs
+                st.session_state.generated_sql = generated_sql
+                st.session_state.results = results
+
+                st.switch_page("pages/Results.py")
+
+        except sqlite3.Error as error:
+            st.error(f"Database error: {error}")
+
+        except Exception as error:
+            st.error(f"Unable to generate the answer: {error}")
+#LK
