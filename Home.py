@@ -45,7 +45,7 @@ with center:
         st.switch_page("pages/Ask.py")
  
 with right:
-    st.image("assets/bus.png", width=360)
+    st.image("assets/bus2.svg", width=360)
  
 #Cards
  

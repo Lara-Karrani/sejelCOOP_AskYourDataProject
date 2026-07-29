@@ -619,7 +619,7 @@ Decide the single best chart type to visualize this data.
 
     return chart_type
 
-
+#TF
 #LF
 def render_chart(df, chart_type, title=""):
     """Render an interactive chart based on Claude's chosen chart type."""
@@ -632,14 +632,106 @@ def render_chart(df, chart_type, title=""):
 
     chart_key = f"chart_{title}_{chart_type}".replace(" ", "_")
 
+    #Create Chart
     if chart_type == "bar":
-        fig = px.bar(df, x=label_column, y=value_column)
-        st.plotly_chart(fig, use_container_width=True, key=chart_key)
+        fig = px.bar(
+            df,
+            x=label_column,
+            y=value_column,
+            color_discrete_sequence=["#00A6A6"]
+        )
 
     elif chart_type == "line":
-        fig = px.line(df, x=label_column, y=value_column, markers=True)
-        st.plotly_chart(fig, use_container_width=True, key=chart_key)
+        fig = px.line(
+            df,
+            x=label_column,
+            y=value_column,
+            markers=True,
+            color_discrete_sequence=["#00A6A6"]
+        )
+
+        fig.update_traces(
+            marker=dict(size=8, color="#D98CB3"),
+            line=dict(width=3)
+        )
 
     elif chart_type == "pie":
-        fig = px.pie(df, names=label_column, values=value_column)
-        st.plotly_chart(fig, use_container_width=True, key=chart_key)
+        fig = px.pie(
+            df,
+            names=label_column,
+            values=value_column,
+            color_discrete_sequence=[
+                "#00A6A6",
+                "#D98CB3",
+                "#5A2A45",
+                "#6EC7C7",
+                "#E8A6C5",
+                "#A86D8E"
+            ]
+        )
+
+    else:
+        st.warning("Unsupported chart type.")
+        return
+
+    #Theme
+    fig.update_layout(
+        paper_bgcolor="#FCEEF5",
+        plot_bgcolor="#FCEEF5",
+        font=dict(
+            family="serif",
+            color="#5A2A45",
+            size=14
+        ),
+        margin=dict(
+            l=20,
+            r=20,
+            t=30,
+            b=20
+        ),
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=14,
+            font_family="serif"
+        ),
+        legend=dict(
+            bgcolor="rgba(0,0,0,0)"
+        )
+    )
+
+    #Axis styling
+    if chart_type != "pie":
+        fig.update_xaxes(
+            showgrid=False,
+            linecolor="#D98CB3",
+            tickfont=dict(color="#5A2A45")
+        )
+
+        fig.update_yaxes(
+            gridcolor="#EFD3E1",
+            zeroline=False,
+            tickfont=dict(color="#5A2A45")
+        )
+
+        fig.update_traces(
+            hovertemplate="<b>%{x}</b><br>Value: %{y}<extra></extra>"
+        )
+
+    else:
+        fig.update_traces(
+            textinfo="percent+label",
+            hovertemplate="<b>%{label}</b><br>Value: %{value}<br>%{percent}<extra></extra>"
+        )
+
+    #Interactive Plot
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        key=chart_key,
+        config={
+            "displayModeBar": True,
+            "displaylogo": False,
+            "scrollZoom": True,
+            "responsive": True
+        }
+    )
