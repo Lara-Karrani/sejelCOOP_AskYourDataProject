@@ -216,7 +216,7 @@ Generate the SQL query now.
 
     sql = response.content[0].text.strip()
 
-    # Remove Markdown code fences if the model adds them.
+    
     if sql.startswith("```"):
         sql = sql.strip("`").strip()
 
@@ -225,6 +225,108 @@ Generate the SQL query now.
 
     return sql.strip()
 
+def explain_sql(sql_query): #LK
+    """
+    Explain the generated SQL query in simple language.
+    """
+
+    prompt = f"""
+You are helping a non-technical user understand an SQL query.
+
+Explain this SQL query in simple English.
+
+SQL:
+{sql_query}
+
+Explain:
+1. Why each table was selected.
+2. Why JOIN was used (if any).
+3. What the WHERE clause filters.
+4. Why GROUP BY was used (if any).
+5. Why COUNT, SUM, AVG, MAX or MIN were used (if any).
+6. What result the query returns.
+
+Keep the explanation simple.
+Do NOT rewrite the SQL.
+"""
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=500,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+
+    return response.content[0].text.strip()#LK
+def generate_related_sql(question, generated_sql, schema):
+    """
+    Generate a second SQL query that retrieves useful data
+    related to the user's original question.
+    """
+
+    prompt = f"""
+You are generating a supporting SQLite query for a transportation database.
+
+Database schema:
+{schema}
+
+User question:
+{question}
+
+Main SQL query:
+{generated_sql}
+
+Write one additional SELECT query that retrieves useful related information.
+
+Examples:
+- If the user asks about active drivers, retrieve active drivers,
+  inactive drivers, and total drivers.
+- If the user asks about active buses, retrieve active buses,
+  inactive buses, and total buses.
+- If the user asks about one company, keep the related query
+  limited to that same company.
+- If the user asks about tickets, retrieve a useful related
+  status breakdown or total.
+- If the main question already returns all useful comparisons,
+  retrieve another closely related aggregate.
+
+Rules:
+- Return only SQL.
+- Use SQLite syntax.
+- Use only tables and columns from the schema.
+- The query must begin with SELECT or WITH.
+- Do not use INSERT, UPDATE, DELETE, DROP, ALTER, or CREATE.
+- Do not invent table or column names.
+- Prefer one result row with clearly named columns.
+"""
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=500,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+
+    related_sql = response.content[0].text.strip()
+
+    if related_sql.startswith("```sql"):
+        related_sql = related_sql[6:]
+
+    if related_sql.startswith("```"):
+        related_sql = related_sql[3:]
+
+    if related_sql.endswith("```"):
+        related_sql = related_sql[:-3]
+
+    return related_sql.strip()
 
 def is_safe(sql):
     """Return True only for one harmless read-only SELECT query."""
@@ -269,7 +371,7 @@ def is_safe(sql):
     return True
 
 
-def run_query(sql):
+def run_query(sql):#Lk
     """Run the safe SELECT query and return the result as a DataFrame."""
 
     # Read-only mode adds another layer of protection.
@@ -299,7 +401,7 @@ def can_draw_bar_chart(results):
     second_is_number = pd.api.types.is_numeric_dtype(results[second_column])
 
     return first_is_text and second_is_number
-#Lk
+
 
 # ===========================
 # Dashboard Statistics
