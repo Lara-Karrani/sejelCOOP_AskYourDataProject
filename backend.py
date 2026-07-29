@@ -336,19 +336,13 @@ def get_total_tickets():
         conn.close()
 
 
-"""def get_total_companies():
+def get_total_companies():
     conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
-<<<<<<< HEAD
         cursor.execute("SELECT COUNT(*) FROM transportation_companies")
-=======
-        cursor.execute(
-            "SELECT COUNT(*) FROM transportation_companies"
-        )
->>>>>>> origin/database-backend
         return cursor.fetchone()[0]
 
     finally:
-        conn.close()"""
+        conn.close()
