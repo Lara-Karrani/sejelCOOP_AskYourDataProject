@@ -8,151 +8,222 @@ import backend
  
 st.set_page_config(
     page_title="AYD | Ask Your Data",
-    page_icon="🚌",
+    page_icon="assets/icons/bus.svg",
     layout="wide"
 )
  
 #Logo
 st.logo("assets/logo.svg")
-
+ 
 #Home page
-col1, col2 = st.columns([0.5, 3])
-
-with col1:
-    st.image("assets/logo.svg", width=130) 
-
-with col2:
-    st.title("Ask Your Data")
-
-st.caption(
-    "Explore transportation companies, buses, drivers, and tickets by asking questions"
-    "in plain English with no SQL knowledge required."
-)
+left, center, right = st.columns([1.1, 2.2, 1.3], vertical_alignment="center")
  
-st.write("\n\n\n")
-st.divider()
+with left:
+    st.image("assets/logo.svg", width=170)
  
+with center:
+    st.markdown(
+        """
+        # Ask Your Data
+        """
+    )
+ 
+    st.markdown(
+        """
+        Explore transportation companies, buses, drivers, and tickets
+        by asking questions in plain English with no SQL knowledge required.
+        """
+    )
+ 
+    st.write("")
+ 
+    if st.button(
+        "Start Asking Questions",
+        type="primary",
+        use_container_width=True,
+    ):
+        st.switch_page("pages/Ask.py")
+ 
+with right:
+    st.image("assets/bus.png", width=360)
  
 #Cards
  
-st.subheader("📊 Database Overview")
+icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+with icon:
+    st.image("assets/icons/chart-no-axes-combined.svg", width=30)
+with title:
+    st.subheader("Database Overview")
  
 bus_card, driver_card, ticket_card, company_card = st.columns(4)
  
 with bus_card:
-    st.metric(
-        label="🚌 Total Buses",
-        value=backend.get_total_buses()
-    )
+    with st.container(border=True):
+ 
+        st.image("assets/icons/bus.svg", width=35)
+ 
+        st.metric(
+            "Total Buses",
+            backend.get_total_buses()
+        )
+ 
+        st.caption("Total buses in system")
  
 with driver_card:
-    st.metric(
-        label="👨 Drivers",
-        value=backend.get_total_drivers()
-    )
+    with st.container(border=True):
+ 
+        st.image("assets/icons/user.svg", width=35)
+ 
+        st.metric(
+            "Total Drivers",
+            backend.get_total_drivers()
+        )
+ 
+        st.caption("Total drivers in system")
  
 with ticket_card:
-    st.metric(
-        label="🎫 Tickets",
-        value=backend.get_total_tickets()
-    )
+    with st.container(border=True):
+ 
+        st.image("assets/icons/ticket.svg", width=35)
+ 
+        st.metric(
+            "Total Tickets",
+            backend.get_total_tickets()
+        )
+ 
+        st.caption("Total tickets in system")
  
 with company_card:
-    st.metric(
-        label="🏢 Companies",
-        value=backend.get_total_companies()
-    )
+    with st.container(border=True):
+ 
+        st.image("assets/icons/building.svg", width=35)
+ 
+        st.metric(
+            "Total Companies",
+            backend.get_total_companies()
+        )
+ 
+        st.caption("Total companies in system")
  
 st.divider()
  
-with st.container():
+icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+with icon:
+    st.image("assets/icons/rocket.svg", width=30)
+with title:
+    st.subheader("Start Exploring")
  
-    st.subheader("🚀 Start Exploring")
+st.caption("Here are some ideas to get you started.")
  
-    st.write(
-        """
-Ask questions about:
+q1, q2, q3, q4 = st.columns(4)
  
-- Transportation companies
-- Buses
-- Drivers
-- Tickets
+with q1:
+    with st.container(border=True):
+        st.image("assets/icons/building.svg", width=35)
+        st.markdown("**Which company has the largest fleet?**")
+        st.caption("Explore company fleet statistics.")
  
-The AI will generate SQL, execute it safely, and return the results.
-"""
-    )
+        if st.button(
+            "Ask →",
+            use_container_width=True,
+            type="primary",
+            key="fleet",
+        ):
+            st.session_state.default_question = (
+                "Which company has the largest fleet?"
+            )
+            st.switch_page("pages/Ask.py")
  
-    if st.button(
-        "Start Asking",
-        type="primary",
-        use_container_width=True
-    ):
-        st.switch_page("pages/Ask.py")
+with q2:
+    with st.container(border=True):
+        st.image("assets/icons/bus.svg", width=35)
+        st.markdown("**Show me buses by bus type**")
+        st.caption("View buses grouped by their type.")
  
-st.divider()
+        if st.button(
+            "Ask →",
+            type="primary",
+            use_container_width=True,
+            key="bus_type",
+        ):
+            st.session_state.default_question = (
+                "Show me buses by bus type."
+            )
+            st.switch_page("pages/Ask.py")
  
-st.subheader("💡 Popular Questions")
+with q3:
+    with st.container(border=True):
+        st.image("assets/icons/user.svg", width=35)
+        st.markdown("**List active drivers in Makkah**")
+        st.caption("Display all active drivers in Makkah.")
  
-col1, col2 = st.columns(2)
+        if st.button(
+            "Ask →",
+            use_container_width=True,
+            type="primary",
+            key="drivers",
+        ):
+            st.session_state.default_question = (
+                "List active drivers in Makkah."
+            )
+            st.switch_page("pages/Ask.py")
  
-with col1:
+with q4:
+    with st.container(border=True):
+        st.image("assets/icons/ticket.svg", width=35)
+        st.markdown("**How many tickets were issued last month?**")
+        st.caption("View monthly ticket statistics.")
  
-    if st.button(
-        "🚌 Which company has the highest number of active buses?",
-        use_container_width=True,
-    ):
-        st.session_state.default_question = (
-            "Which company has the highest number of active buses?"
+        if st.button(
+            "Ask →",
+            type="primary",
+            use_container_width=True,
+            key="tickets",
+        ):
+            st.session_state.default_question = (
+                "How many tickets were issued last month?"
+            )
+            st.switch_page("pages/Ask.py")
+ 
+ 
+icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+with icon:
+    st.image("assets/icons/sparkles.svg", width=30)
+with title:
+    st.subheader("Why Choose AYD?")
+ 
+feature1, feature2, feature3, feature4 = st.columns(4)
+ 
+with feature1:
+    with st.container(border=True):
+        st.image("assets/icons/message-circle.svg", width=35)
+        st.markdown("**Ask in Plain English**")
+        st.caption(
+            "No SQL knowledge needed. Just ask naturally."
         )
-        st.switch_page("pages/Ask.py")
  
-    if st.button(
-        "🔧 Show all buses currently under maintenance.",
-        use_container_width=True,
-    ):
-        st.session_state.default_question = (
-            "Show all buses currently in maintenance state."
+with feature2:
+    with st.container(border=True):
+        st.image("assets/icons/shield-check.svg", width=35)
+        st.markdown("**Smart & Safe**")
+        st.caption(
+            "AI generates safe SQL queries for your data."
         )
-        st.switch_page("pages/Ask.py")
  
-    if st.button(
-        "👨 Which company has the most drivers?",
-        use_container_width=True,
-    ):
-        st.session_state.default_question = (
-            "Which company has the most drivers?"
+with feature3:
+    with st.container(border=True):
+        st.image("assets/icons/chart-no-axes-combined.svg", width=35)
+        st.markdown("**Visual Insights**")
+        st.caption(
+            "View your results as tables and charts."
         )
-        st.switch_page("pages/Ask.py")
  
-with col2:
- 
-    if st.button(
-        "🎫 How many tickets are there by status?",
-        use_container_width=True,
-    ):
-        st.session_state.default_question = (
-            "How many tickets are there by status?"
+with feature4:
+    with st.container(border=True):
+        st.image("assets/icons/zap.svg", width=35)
+        st.markdown("**Fast & Accurate**")
+        st.caption(
+            "Instant answers from your transportation database."
         )
-        st.switch_page("pages/Ask.py")
- 
-    if st.button(
-        "🏢 Show companies ordered by fleet size.",
-        use_container_width=True,
-    ):
-        st.session_state.default_question = (
-            "Show companies ordered by fleet size."
-        )
-        st.switch_page("pages/Ask.py")
- 
-    if st.button(
-        "💺 What is the average number of seats per company?",
-        use_container_width=True,
-    ):
-        st.session_state.default_question = (
-            "What is the average number of seats per company?"
-        )
-        st.switch_page("pages/Ask.py")
- 
- 
 #TF
  

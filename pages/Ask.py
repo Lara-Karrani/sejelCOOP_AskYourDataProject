@@ -3,8 +3,13 @@
 import streamlit as st
 import sqlite3
 import backend
+from backend import get_schema_text, generate_sql, is_safe, run_query
  
-st.title("🤖Ask Your Data")
+icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+with icon:
+    st.image("assets/icons/bot.svg", width=35)
+with title:
+    st.title("Ask Your Data")
  
  
 #Question
@@ -12,7 +17,11 @@ default_question = st.session_state.get("default_question", "")
  
 with st.container(border=True):
  
-    st.subheader("💬 Ask a Question")
+    icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+    with icon:
+        st.image("assets/icons/message-circle.svg", width=28)
+    with title:
+        st.subheader("Ask a Question")
  
     input_col, button_col = st.columns([6, 1])
  
@@ -28,14 +37,18 @@ with st.container(border=True):
     with button_col:
  
         ask_clicked = st.button(
-            "🚀 Ask",
+            "Ask",
             type="primary",
             use_container_width=True,
         )
  
 with st.container(border=True):
  
-    st.subheader("📤 Choose Output")
+    icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+    with icon:
+        st.image("assets/icons/square-arrow-right-exit.svg", width=28)
+    with title:
+        st.subheader("Choose Output")
  
     st.caption(
         "Select one or more output formats for your answer."
@@ -44,22 +57,30 @@ with st.container(border=True):
     sql_checkbox, chart_checkbox, table_checkbox = st.columns(3)#LK
  
     with sql_checkbox:
-        sql = st.checkbox(
-            "💻 SQL Query",
-            help="Show the generated SQL statement."
-        )
+        with st.container(border=True):
+            sql = st.checkbox(
+                "SQL Query",
+                help="Show the generated SQL statement."
+            )
  
     with chart_checkbox:
-        chart = st.checkbox(
-            "📊 Chart",
-            help="Display a chart whenever possible."
-        )
+        with st.container(border=True):
+            chart = st.checkbox(
+                "Chart",
+                help="Display a chart whenever possible."
+            )
  
     with table_checkbox:#LK
         table_option = st.checkbox(
             "📋 Results Table",
             help="Display the query results in a table."
         )
+    with table_checkbox:
+        with st.container(border=True):
+            table_option = st.checkbox(
+                "Results Table",
+                help="Display the query results in a table."
+            )
  
 #Save Selected Outputs
 selected_outputs = []
@@ -68,8 +89,13 @@ if sql:
     selected_outputs.append("sql")
 if chart:
     selected_outputs.append("chart")
-if summary:
-    selected_outputs.append("summary")
+if table_option:
+    selected_outputs.append("table")
+ 
+#LF
+if st.button("Start New Conversation"):
+    st.session_state.question_history = []
+    st.rerun()
  
 #TF
 #Ask Button
