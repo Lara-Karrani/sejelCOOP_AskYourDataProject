@@ -7,7 +7,8 @@ import streamlit as st
 from anthropic import Anthropic
 
 #LF 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+import plotly.express as px
 
 DB_FILE = "askyourdata.db"
 print("Backend loaded from:", __file__)
@@ -519,24 +520,24 @@ Decide the single best chart type to visualize this data.
 
 #LF
 def render_chart(df, chart_type, title=""):
-    """Render a chart based on Claude's chosen chart type."""
+    """Render an interactive chart based on Claude's chosen chart type."""
 
-    st.write(f"**{title}**")
+    if title:
+        st.write(f"**{title}**")
+
+    label_column = df.columns[0]
+    value_column = df.columns[1]
+
+    chart_key = f"chart_{title}_{chart_type}".replace(" ", "_")
 
     if chart_type == "bar":
-        st.bar_chart(df.set_index(df.columns[0]))
+        fig = px.bar(df, x=label_column, y=value_column)
+        st.plotly_chart(fig, use_container_width=True, key=chart_key)
 
     elif chart_type == "line":
-        st.line_chart(df.set_index(df.columns[0]))
+        fig = px.line(df, x=label_column, y=value_column, markers=True)
+        st.plotly_chart(fig, use_container_width=True, key=chart_key)
 
     elif chart_type == "pie":
-        fig, ax = plt.subplots()
-        ax.pie(
-            df[df.columns[1]],
-            labels=df[df.columns[0]],
-            autopct='%1.1f%%'
-        )
-        ax.axis('equal')
-        st.pyplot(fig)
-
-
+        fig = px.pie(df, names=label_column, values=value_column)
+        st.plotly_chart(fig, use_container_width=True, key=chart_key)
