@@ -113,7 +113,7 @@ with col1:
         st.session_state.default_question = (
             "Show all buses currently in maintenance state."
         )
-        st.switch_page("pages/Ask.py")
+        st.switch_page("pages/Ask.py")  
  
     if st.button(
         "👨 Which company has the most drivers?",
