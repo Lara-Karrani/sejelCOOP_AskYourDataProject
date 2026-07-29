@@ -1,8 +1,9 @@
 #Results Page
 #TF
 import streamlit as st
- 
-from backend import can_draw_bar_chart
+import pandas as pd
+ #LF
+from backend import decide_chart_type, render_chart
  
  
 st.set_page_config(
@@ -14,7 +15,7 @@ st.set_page_config(
 st.title("📊 Results")
  
 st.caption(
-    "Review your query results, charts, explanation, and generated SQL."
+    "Review your selected data output, visualisation, and generated SQL."
 )
  
 st.divider()
@@ -24,6 +25,8 @@ question = st.session_state.get("question", "")
 outputs = st.session_state.get("outputs", [])
 generated_sql = st.session_state.get("generated_sql", "")
 results = st.session_state.get("results", None)
+related_sql = st.session_state.get("related_sql", "")
+related_results = st.session_state.get("related_results", None)#LK
  
  
 # Protect the page if opened before asking a question
@@ -41,86 +44,116 @@ st.subheader("❓ Your Question")
 st.info(question)
  
 st.divider()
- 
- 
-# Results Table
+ # Summary
 with st.container(border=True):
- 
-    st.subheader("📋 Query Results")
- 
-    if results.empty:
- 
-        st.warning(
-            "No matching records were found."
+
+    st.subheader("📝 Summary")
+
+    if related_results is None or related_results.empty:
+
+        st.info(
+            "No related summary data is available."
         )
- 
+
     else:
- 
-        st.dataframe(
-            results,
-            use_container_width=True,
-            hide_index=True,
-        )
- 
-# Chart
-if "chart" in outputs:
- 
-    with st.container(border=True):
- 
-        st.subheader("📊 Visualization")
- 
-        if can_draw_bar_chart(results):
- 
-            first_column = results.columns[0]
-            second_column = results.columns[1]
- 
-            chart_data = results.set_index(first_column)[second_column]
- 
-            st.bar_chart(chart_data)
- 
-        else:
- 
-            st.info(
-                "A bar chart cannot be created because the result must contain one text column and one numeric column."
+
+        summary_parts = []
+
+        for column in related_results.columns:
+
+            value = related_results.iloc[0][column]
+
+            clean_column = column.replace("_", " ").title()
+
+            summary_parts.append(
+                f"{clean_column}: {value}"
             )
+
+        st.info(" | ".join(summary_parts))
+        st.subheader("Related SQL")
+        st.code(related_sql, language="sql")
  
- 
-# Results Explanation
-if "summary" in outputs:
- 
+# Results Table 
+if "table" in outputs:#LK
+
     with st.container(border=True):
- 
-        st.subheader("📝 Results Explanation")
- 
+
+        st.subheader("Query Results")
+
         if results.empty:
- 
-            st.info(
-                "No matching records were found for this question."
+
+            st.warning(
+                "No matching records were found."
             )
- 
-        elif len(results) == 1:
- 
-            st.info(
-                f"The query returned 1 matching record with {len(results.columns)} result column(s)."
-            )
- 
+
         else:
- 
-            st.info(
-                f"The query returned {len(results)} matching records with {len(results.columns)} result columns."
+
+            st.dataframe(
+                results,
+                use_container_width=True,
+                hide_index=True,
             )
  
+# Chart 
+#LF
+if "chart" in outputs:
+
+    with st.container(border=True):
+
+        st.subheader("📊 Visualization")
+
+        if results.empty:
+            st.info("No data available to visualize.")
+
+        else:
+            numeric_columns = [
+                col for col in results.columns
+                if pd.api.types.is_numeric_dtype(results[col])
+            ]
+            text_columns = [
+                col for col in results.columns
+                if not pd.api.types.is_numeric_dtype(results[col])
+            ]
+
+            if not numeric_columns or not text_columns:
+                st.info(
+                    "A chart cannot be created because the result needs "
+                    "at least one text column and one numeric column."
+                )
+            else:
+                label_column = text_columns[0]
+                value_column = numeric_columns[0]
+
+                chart_df = results[[label_column, value_column]].copy()
+
+                chart_type = decide_chart_type(
+                    data_description=f"Query result for the question: '{question}'",
+                    columns=[label_column, value_column]
+                )
+
+                render_chart(chart_df, chart_type, title="")
+        
+
  
-# SQL Query
+ #Results Explanation Removed
+
+ 
+ 
+# SQL Query LK
 if "sql" in outputs:
     with st.container(border=True):
- 
+
         st.subheader("💻 Generated SQL")
         st.code(
             generated_sql,
             language="sql",
         )
- 
+
+        explanation = backend.explain_sql(generated_sql)
+
+        st.subheader("📝 Query Explanation")
+        st.write(explanation)
+
     st.divider()
  
  

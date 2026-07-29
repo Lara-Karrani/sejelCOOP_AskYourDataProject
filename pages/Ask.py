@@ -2,6 +2,7 @@
 #TF
 import streamlit as st
 import sqlite3
+import backend
 from backend import get_schema_text, generate_sql, is_safe, run_query
  
 icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
@@ -10,9 +11,6 @@ with icon:
 with title:
     st.title("Ask Your Data")
  
-#LF
-if "question_history" not in st.session_state:
-    st.session_state.question_history = []
  
 #Question
 default_question = st.session_state.get("default_question", "")
@@ -56,7 +54,7 @@ with st.container(border=True):
         "Select one or more output formats for your answer."
     )
  
-    sql_checkbox, chart_checkbox, summary_checkbox = st.columns(3)
+    sql_checkbox, chart_checkbox, table_checkbox = st.columns(3)#LK
  
     with sql_checkbox:
         with st.container(border=True):
@@ -72,11 +70,16 @@ with st.container(border=True):
                 help="Display a chart whenever possible."
             )
  
-    with summary_checkbox:
+    with table_checkbox:#LK
+        table_option = st.checkbox(
+            "📋 Results Table",
+            help="Display the query results in a table."
+        )
+    with table_checkbox:
         with st.container(border=True):
-            summary = st.checkbox(
-                "Results Explanation",
-                help="Show an AI-generated explanation."
+            table_option = st.checkbox(
+                "Results Table",
+                help="Display the query results in a table."
             )
  
 #Save Selected Outputs
@@ -86,8 +89,8 @@ if sql:
     selected_outputs.append("sql")
 if chart:
     selected_outputs.append("chart")
-if summary:
-    selected_outputs.append("summary")
+if table_option:
+    selected_outputs.append("table")
  
 #LF
 if st.button("Start New Conversation"):
@@ -109,21 +112,29 @@ if ask_clicked:
             with st.spinner("Generating and running your query..."):
  
                 schema = get_schema_text() #LF
-                generated_sql = generate_sql(question, schema, conversation_history=st.session_state.question_history)
+                generated_sql = generate_sql(question, schema)
  
-                if not is_safe(generated_sql):
+                if not backend.is_safe(generated_sql):
                     st.error("The generated query was rejected for safety.")
                     st.stop()
  
-                results = run_query(generated_sql)
- 
+                
+                results = backend.run_query(generated_sql)
+
+                related_sql = backend.generate_related_sql(question,generated_sql,schema,)
+
+                if not backend.is_safe(related_sql):
+                    st.error("The related query was rejected for safety.")
+                    st.stop()
+
+                related_results = backend.run_query(related_sql)
+                
                 st.session_state.question = question
                 st.session_state.outputs = selected_outputs
                 st.session_state.generated_sql = generated_sql
                 st.session_state.results = results
- 
-                #LF
-                st.session_state.question_history.append(question)
+                st.session_state.related_sql = related_sql#LK
+                st.session_state.related_results = related_results#LK
  
                 st.switch_page("pages/Results.py")
  
