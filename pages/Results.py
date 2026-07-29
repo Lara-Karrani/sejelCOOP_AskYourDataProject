@@ -2,24 +2,39 @@
 #TF
 import streamlit as st
 import pandas as pd
- #LF
+
+#LF
 from backend import decide_chart_type, render_chart
- 
- 
+import backend
+
+
 st.set_page_config(
     page_title="Results",
-    page_icon="📊",
+    page_icon="assets/icons/chart-no-axes-combined.svg",
     layout="wide",
 )
- 
-st.title("📊 Results")
- 
+
+
+# Page Title
+icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+
+with icon:
+    st.image(
+        "assets/icons/chart-no-axes-combined.svg",
+        width=30
+    )
+
+with title:
+    st.title("Results")
+
+
 st.caption(
     "Review your selected data output, visualisation, and generated SQL."
 )
- 
+
 st.divider()
- 
+
+
 # Read saved data from Ask.py
 question = st.session_state.get("question", "")
 outputs = st.session_state.get("outputs", [])
@@ -27,27 +42,59 @@ generated_sql = st.session_state.get("generated_sql", "")
 results = st.session_state.get("results", None)
 related_sql = st.session_state.get("related_sql", "")
 related_results = st.session_state.get("related_results", None)#LK
- 
- 
+
+
+
 # Protect the page if opened before asking a question
 if not question or results is None:
+
     st.warning("Please ask a question first.")
- 
-    if st.button("Go to Ask Page"):
+
+    if st.button(
+        "Ask Page",
+        icon=":material/arrow_back:"
+    ):
         st.switch_page("pages/Ask.py")
- 
+
     st.stop()
- 
- 
+
+
+
 # User Question
-st.subheader("❓ Your Question")
+
+icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+
+with icon:
+    st.image(
+        "assets/icons/question.svg",
+        width=25
+    )
+
+with title:
+    st.subheader("Your Question")
+
+
 st.info(question)
- 
+
 st.divider()
- # Summary
+
+
+
+# Summary
+
 with st.container(border=True):
 
-    st.subheader("📝 Summary")
+    icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+
+    with icon:
+        st.image(
+            "assets/icons/scroll-text.svg",
+            width=25
+        )
+
+    with title:
+        st.subheader("Summary")
+
 
     if related_results is None or related_results.empty:
 
@@ -70,15 +117,19 @@ with st.container(border=True):
             )
 
         st.info(" | ".join(summary_parts))
+
         st.subheader("Related SQL")
         st.code(related_sql, language="sql")
- 
+
+
+
 # Results Table 
 if "table" in outputs:#LK
 
     with st.container(border=True):
 
         st.subheader("Query Results")
+
 
         if results.empty:
 
@@ -90,37 +141,57 @@ if "table" in outputs:#LK
 
             st.dataframe(
                 results,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
- 
+
+
+
 # Chart 
 #LF
+
 if "chart" in outputs:
 
     with st.container(border=True):
 
-        st.subheader("📊 Visualization")
+        icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+
+        with icon:
+            st.image(
+                "assets/icons/chart-no-axes-combined.svg",
+                width=25
+            )
+
+        with title:
+            st.subheader("Visualization")
+
 
         if results.empty:
+
             st.info("No data available to visualize.")
 
         else:
+
             numeric_columns = [
                 col for col in results.columns
                 if pd.api.types.is_numeric_dtype(results[col])
             ]
+
             text_columns = [
                 col for col in results.columns
                 if not pd.api.types.is_numeric_dtype(results[col])
             ]
 
+
             if not numeric_columns or not text_columns:
+
                 st.info(
                     "A chart cannot be created because the result needs "
                     "at least one text column and one numeric column."
                 )
+
             else:
+
                 label_column = text_columns[0]
                 value_column = numeric_columns[0]
 
@@ -131,19 +202,36 @@ if "chart" in outputs:
                     columns=[label_column, value_column]
                 )
 
-                render_chart(chart_df, chart_type, title="")
-        
+                render_chart(
+                    chart_df,
+                    chart_type,
+                    title=""
+                )
 
- 
- #Results Explanation Removed
 
- 
- 
+
+#Results Explanation Removed
+
+
+
 # SQL Query LK
+
 if "sql" in outputs:
+
     with st.container(border=True):
 
-        st.subheader("💻 Generated SQL")
+        icon, title = st.columns([0.03, 0.97], vertical_alignment="center", gap="small")
+
+        with icon:
+            st.image(
+                "assets/icons/database-search.svg",
+                width=25
+            )
+
+        with title:
+            st.subheader("Generated SQL")
+
+
         st.code(
             generated_sql,
             language="sql",
@@ -151,19 +239,23 @@ if "sql" in outputs:
 
         explanation = backend.explain_sql(generated_sql)
 
-        st.subheader("📝 Query Explanation")
-        st.write(explanation)
+        st.caption(explanation)
+
 
     st.divider()
- 
- 
+
+
+
 # Ask Another Question
+
 left, right = st.columns([5,1])
- 
+
+
 with right:
- 
+
     if st.button(
-        "⬅️ Ask Again",
-        use_container_width=True,
+        "Ask Again",
+        icon=":material/refresh:",
+        width="stretch",
     ):
         st.switch_page("pages/Ask.py")
