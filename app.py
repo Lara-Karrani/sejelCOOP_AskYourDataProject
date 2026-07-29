@@ -107,11 +107,11 @@ with col1:
         st.switch_page("pages/Ask.py")
  
     if st.button(
-        "🔧 Show all buses currently under maintenance.",
+        "🔧 Show all buses currently under maintenance",
         use_container_width=True,
     ):
         st.session_state.default_question = (
-            "Show all buses currently under maintenance."
+            "Show all buses currently in maintenance state."
         )
         st.switch_page("pages/Ask.py")
  

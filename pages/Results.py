@@ -1,8 +1,9 @@
 #Results Page
 #TF
 import streamlit as st
- 
-from backend import can_draw_bar_chart
+import pandas as pd
+ #LF
+from backend import decide_chart_type, render_chart
  
  
 st.set_page_config(
@@ -62,27 +63,46 @@ with st.container(border=True):
             hide_index=True,
         )
  
-# Chart
+# Chart 
+#LF
 if "chart" in outputs:
- 
+
     with st.container(border=True):
- 
+
         st.subheader("📊 Visualization")
- 
-        if can_draw_bar_chart(results):
- 
-            first_column = results.columns[0]
-            second_column = results.columns[1]
- 
-            chart_data = results.set_index(first_column)[second_column]
- 
-            st.bar_chart(chart_data)
- 
+
+        if results.empty:
+            st.info("No data available to visualize.")
+
         else:
- 
-            st.info(
-                "A bar chart cannot be created because the result must contain one text column and one numeric column."
-            )
+            numeric_columns = [
+                col for col in results.columns
+                if pd.api.types.is_numeric_dtype(results[col])
+            ]
+            text_columns = [
+                col for col in results.columns
+                if not pd.api.types.is_numeric_dtype(results[col])
+            ]
+
+            if not numeric_columns or not text_columns:
+                st.info(
+                    "A chart cannot be created because the result needs "
+                    "at least one text column and one numeric column."
+                )
+            else:
+                label_column = text_columns[0]
+                value_column = numeric_columns[0]
+
+                chart_df = results[[label_column, value_column]].copy()
+
+                chart_type = decide_chart_type(
+                    data_description=f"Query result for the question: '{question}'",
+                    columns=[label_column, value_column]
+                )
+
+                render_chart(chart_df, chart_type, title="")
+        
+
  
  
 # Results Explanation

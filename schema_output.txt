@@ -1,0 +1,218 @@
+
+TABLE: bus_categories
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- category_name TEXT
+SAMPLE VALUES:
+- category_name: ['Standard Bus', 'Luxury Coach', 'Mini Bus', 'Accessible Bus']
+
+TABLE: bus_season_map
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- bus_id INTEGER
+- season_id INTEGER
+- can_participate INTEGER
+- approved_participant INTEGER
+- out_of_service INTEGER
+- temporarily_stopped INTEGER
+- permanently_stopped INTEGER
+- participation_status TEXT
+RELATIONSHIPS:
+- bus_season_map.season_id references seasons.id
+- bus_season_map.bus_id references buses.id
+SAMPLE VALUES:
+- participation_status: ['Eligible', 'Cancelled', 'Approved', 'Rejected', 'New']
+
+TABLE: buses
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- company_id INTEGER
+- manufacturer_id INTEGER
+- category_id INTEGER
+- license_serial_no TEXT
+- plate_number TEXT
+- operating_number TEXT
+- chassis_number TEXT
+- model_year INTEGER
+- seats INTEGER
+- passenger_seats INTEGER
+- owner_identity_no TEXT
+- ownership_type TEXT
+- inspection_expiry TEXT
+- license_expiry TEXT
+- bus_status TEXT
+RELATIONSHIPS:
+- buses.category_id references bus_categories.id
+- buses.manufacturer_id references manufacturing_companies.id
+- buses.company_id references transportation_companies.id
+SAMPLE VALUES:
+- license_serial_no: ['LSN-760000001', 'LSN-760000002', 'LSN-760000003', 'LSN-760000004', 'LSN-760000005']
+- plate_number: ['JED-1001', 'JED-1004', 'JED-1021', 'JED-1022', 'JED-1024']
+- operating_number: ['BUS-01-0001', 'BUS-01-0013', 'BUS-01-0025', 'BUS-01-0037', 'BUS-01-0049']
+- chassis_number: ['CHS-2026000001', 'CHS-2026000002', 'CHS-2026000003', 'CHS-2026000004', 'CHS-2026000005']
+- owner_identity_no: ['OWN-700000001', 'OWN-700000002', 'OWN-700000003', 'OWN-700000004', 'OWN-700000005']
+
+TABLE: cities
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- city_name TEXT
+SAMPLE VALUES:
+- city_name: ['Mecca', 'Jeddah', 'Medina', 'Taif', 'Mina']
+
+TABLE: contract_types
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- contract_type_name TEXT
+SAMPLE VALUES:
+- contract_type_name: ['Permanent', 'Seasonal', 'Temporary']
+
+TABLE: driver_season_map
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- driver_id INTEGER
+- company_id INTEGER
+- season_id INTEGER
+- can_participate INTEGER
+- approved_participant INTEGER
+- out_of_service INTEGER
+- cancellation_requested INTEGER
+- temporarily_suspended INTEGER
+- participation_status TEXT
+RELATIONSHIPS:
+- driver_season_map.season_id references seasons.id
+- driver_season_map.company_id references transportation_companies.id
+- driver_season_map.driver_id references drivers.id
+SAMPLE VALUES:
+- participation_status: ['Stopped', 'Eligible', 'Approved', 'Rejected', 'Cancelled']
+
+TABLE: driver_types
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- driver_type_name TEXT
+SAMPLE VALUES:
+- driver_type_name: ['Citizen', 'Resident', 'Border Number', 'External Driver']
+
+TABLE: drivers
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- company_id INTEGER
+- nationality_id INTEGER
+- driver_type_id INTEGER
+- contract_type_id INTEGER
+- identity_number TEXT
+- first_name TEXT
+- father_name TEXT
+- last_name TEXT
+- birth_date TEXT
+- mobile_number TEXT
+- driver_status TEXT
+RELATIONSHIPS:
+- drivers.contract_type_id references contract_types.id
+- drivers.driver_type_id references driver_types.id
+- drivers.nationality_id references nationalities.id
+- drivers.company_id references transportation_companies.id
+SAMPLE VALUES:
+- identity_number: ['DRV-1000000001', 'DRV-1000000002', 'DRV-1000000003', 'DRV-1000000004', 'DRV-1000000005']
+- first_name: ['Ahmed', 'Mohammed', 'Omar', 'Faisal', 'Yousef']
+- father_name: ['Ali', 'Hassan', 'Saleh', 'Mahmoud', 'Abdullah']
+- last_name: ['Al Harbi', 'Al Otaibi', 'Al Zahrani', 'Khan', 'Ahmed']
+- birth_date: ['1969-09-26', '1977-12-23', '1988-08-24', '1981-09-09', '1977-12-31']
+
+TABLE: manufacturing_companies
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- manufacturer_name TEXT
+SAMPLE VALUES:
+- manufacturer_name: ['Mercedes-Benz', 'Volvo', 'MAN', 'Scania', 'Yutong']
+
+TABLE: nationalities
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- nationality_name TEXT
+SAMPLE VALUES:
+- nationality_name: ['Saudi', 'Egyptian', 'Pakistani', 'Indian', 'Sudanese']
+
+TABLE: requests
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- company_id INTEGER
+- request_type TEXT
+- request_date TEXT
+- request_status TEXT
+- bus_id INTEGER
+- driver_id INTEGER
+- comments TEXT
+RELATIONSHIPS:
+- requests.driver_id references drivers.id
+- requests.bus_id references buses.id
+- requests.company_id references transportation_companies.id
+SAMPLE VALUES:
+- request_type: ['Driver Participation', 'Bus Participation', 'Add Bus', 'Add Driver']
+- request_date: ['2026-07-30', '2026-07-01', '2026-06-07', '2026-07-07', '2026-03-13']
+- request_status: ['Approved', 'Waiting for Verification', 'Rejected', 'New', 'Waiting for Approval']
+- comments: ['The request was reviewed.', 'Documents are complete.', 'Additional verification is required.', 'Missing attachment.']
+
+TABLE: seasons
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- season_name TEXT
+- season_type TEXT
+- start_date TEXT
+- end_date TEXT
+SAMPLE VALUES:
+- season_name: ['Hajj 1447', 'Umrah 1447']
+- season_type: ['Hajj', 'Umrah']
+- start_date: ['2026-05-20', '2026-01-01']
+- end_date: ['2026-06-10', '2026-12-31']
+
+TABLE: tickets
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- company_id INTEGER
+- ticket_type TEXT
+- classification TEXT
+- ticket_status TEXT
+- city_id INTEGER
+- ticket_date TEXT
+- description TEXT
+RELATIONSHIPS:
+- tickets.city_id references cities.id
+- tickets.company_id references transportation_companies.id
+SAMPLE VALUES:
+- ticket_type: ['Driver Complaint', 'Bus Breakdown', 'Route Violation', 'Delay', 'Safety Issue']
+- classification: ['Administrative', 'Technical', 'Operational', 'Safety']
+- ticket_status: ['In Progress', 'Open', 'Closed', 'Cancelled']
+- ticket_date: ['2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-10']
+- description: ['A driver-related complaint requires review.', 'The bus stopped because of a technical issue.', 'The assigned route may have been violated.', 'The bus arrived later than the assigned time.', 'A safety inspection is required.']
+
+TABLE: transportation_companies
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- company_name TEXT
+- company_name_ar TEXT
+- company_type_id INTEGER
+- city_id INTEGER
+- district TEXT
+- commercial_registration TEXT
+- license_number TEXT
+- manager_name TEXT
+- manager_mobile TEXT
+- email TEXT
+- operation_type TEXT
+- company_status TEXT
+RELATIONSHIPS:
+- transportation_companies.city_id references cities.id
+- transportation_companies.company_type_id references transportation_company_types.id
+SAMPLE VALUES:
+- company_name: ['Al Huda Mobility', 'Al Madinah Fleet', 'Al Noor Transportation', 'Al Safa Bus Company', 'Arafat Transit']
+- company_name_ar: ['شركة النور للنقل', 'شركة الصفا للحافلات', 'شركة الطواف للنقل', 'أسطول المدينة', 'شركة طريق الحجاج']
+- district: ['Al Aziziyah', 'Al Naseem', 'Al Rawdah', 'Al Hamra', 'Al Shati']
+- commercial_registration: ['CR-4030000001', 'CR-4030000002', 'CR-4030000003', 'CR-4030000004', 'CR-4030000005']
+- license_number: ['LIC-1001', 'LIC-1002', 'LIC-1003', 'LIC-1004', 'LIC-1005']
+
+TABLE: transportation_company_types
+COLUMNS:
+- id INTEGER PRIMARY KEY
+- type_name TEXT
+SAMPLE VALUES:
+- type_name: ['Transportation Company', 'Bus Operator', 'Seasonal Transport Provider']

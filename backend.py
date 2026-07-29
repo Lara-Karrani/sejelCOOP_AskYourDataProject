@@ -6,6 +6,8 @@ import pandas as pd
 import streamlit as st
 from anthropic import Anthropic
 
+#LF 
+import matplotlib.pyplot as plt
 
 DB_FILE = "askyourdata.db"
 print("Backend loaded from:", __file__)
@@ -147,7 +149,7 @@ valid SQLite SELECT query.
 </database_information>
 
 {history_text}
-
+<user_question>
 {question}
 </user_question>
 
@@ -346,3 +348,195 @@ def get_total_companies():
 
     finally:
         conn.close()
+
+
+# ===========================
+# AI-Generated Insights
+# ===========================
+#LF
+def get_data_summary():
+    """يجمع إحصائيات أساسية من قاعدة البيانات عشان Claude يحللها."""
+
+    conn = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True)
+
+    try:
+        summary = {}
+
+        # نسبة مشاركة الحافلات لكل شركة (من bus_season_map)
+        summary["bus_participation_by_company"] = conn.execute("""
+            SELECT tc.company_name,
+                   COUNT(*) as total_buses,
+                   SUM(CASE WHEN bsm.can_participate = 1 THEN 1 ELSE 0 END) as participating_buses
+            FROM bus_season_map bsm
+            JOIN buses b ON bsm.bus_id = b.id
+            JOIN transportation_companies tc ON b.company_id = tc.id
+            GROUP BY tc.company_name
+        """).fetchall()
+
+        # الحافلات النشطة مقابل الإجمالي لكل شركة
+        summary["active_vs_total_buses"] = conn.execute("""
+            SELECT tc.company_name,
+                   COUNT(*) as total_buses,
+                   SUM(CASE WHEN b.bus_status = 'Active' THEN 1 ELSE 0 END) as active_buses
+            FROM buses b
+            JOIN transportation_companies tc ON b.company_id = tc.id
+            GROUP BY tc.company_name
+        """).fetchall()
+
+        # الشركات ذات أعلى عدد طلبات معلقة (pending)
+        summary["pending_requests_by_company"] = conn.execute("""
+            SELECT tc.company_name, COUNT(*) as pending_count
+            FROM requests r
+            JOIN transportation_companies tc ON r.company_id = tc.id
+            WHERE r.request_status IN ('New', 'Waiting for Verification', 'Waiting for Approval')
+            GROUP BY tc.company_name
+            ORDER BY pending_count DESC
+            LIMIT 10
+        """).fetchall()
+
+        # المدن وعدد الشركات فيها
+        summary["companies_by_city"] = conn.execute("""
+            SELECT c.city_name, COUNT(*) as company_count
+            FROM transportation_companies tc
+            JOIN cities c ON tc.city_id = c.id
+            GROUP BY c.city_name
+            ORDER BY company_count DESC
+        """).fetchall()
+
+        # نمو الأسطول (عدد الحافلات لكل شركة، مرتبة تنازليًا)
+        summary["fleet_size_by_company"] = conn.execute("""
+            SELECT tc.company_name, COUNT(*) as fleet_size
+            FROM buses b
+            JOIN transportation_companies tc ON b.company_id = tc.id
+            GROUP BY tc.company_name
+            ORDER BY fleet_size DESC
+        """).fetchall()
+
+        return summary
+
+    finally:
+        conn.close()
+
+#LF
+def generate_insights():
+    """يطلب من Claude يحلل البيانات ويطلع ملاحظات مهمة (trends/anomalies)."""
+
+    summary = get_data_summary()
+
+    prompt = f"""
+You are a data analyst reviewing Hajj-season transportation fleet statistics
+for an application called Ask Your Data.
+
+<data_summary>
+Bus participation by company (total_buses, participating_buses):
+{summary['bus_participation_by_company']}
+
+Active vs total buses by company:
+{summary['active_vs_total_buses']}
+
+Pending requests by company:
+{summary['pending_requests_by_company']}
+
+Number of transportation companies by city:
+{summary['companies_by_city']}
+
+Fleet size by company:
+{summary['fleet_size_by_company']}
+</data_summary>
+
+<task>
+Analyze this data and identify 3 to 5 meaningful trends or anomalies, such as:
+- Companies with unusually low participation rates compared to others.
+- A significant gap between active and total buses for any company.
+- Companies with the highest number of pending requests.
+- The city with the highest concentration of transportation companies.
+- Companies with the largest fleet size.
+</task>
+
+<rules>
+1. Return only a bulleted list of insights, nothing else.
+2. Each insight must be a single, clear sentence referencing actual
+   numbers from the data provided.
+3. Never invent a company, city, or number not present in the summary.
+4. If a category shows no notable pattern, skip it entirely.
+5. Do not use Markdown headers, only plain bullet points (-).
+</rules>
+
+Generate the insights now.
+"""
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=600,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.content[0].text.strip()
+#LF
+def decide_chart_type(data_description, columns):
+    """Ask Claude to decide the best chart type for a given dataset."""
+
+    prompt = f"""
+You are a data visualization expert.
+
+<data_description>
+{data_description}
+</data_description>
+
+<columns>
+{columns}
+</columns>
+
+<task>
+Decide the single best chart type to visualize this data.
+</task>
+
+<rules>
+1. Return only one word: bar, line, or pie.
+2. Use "pie" only when showing parts of a whole (e.g., proportions across
+   a small number of categories, typically 2-6).
+3. Use "line" only when the data represents a trend over time or ordered
+   sequence (e.g., dates, seasons, months).
+4. Use "bar" for comparing values across categories in all other cases.
+5. Do not explain your choice. Return only the single word.
+</rules>
+"""
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=10,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    chart_type = response.content[0].text.strip().lower()
+
+    # حماية احتياطية لو رجع شي غير متوقع
+    if chart_type not in ["bar", "line", "pie"]:
+        chart_type = "bar"
+
+    return chart_type
+
+
+#LF
+def render_chart(df, chart_type, title=""):
+    """Render a chart based on Claude's chosen chart type."""
+
+    st.write(f"**{title}**")
+
+    if chart_type == "bar":
+        st.bar_chart(df.set_index(df.columns[0]))
+
+    elif chart_type == "line":
+        st.line_chart(df.set_index(df.columns[0]))
+
+    elif chart_type == "pie":
+        fig, ax = plt.subplots()
+        ax.pie(
+            df[df.columns[1]],
+            labels=df[df.columns[0]],
+            autopct='%1.1f%%'
+        )
+        ax.axis('equal')
+        st.pyplot(fig)
+
+
