@@ -6,9 +6,6 @@ import backend
  
 st.title("🤖Ask Your Data")
  
-#LF
-if "question_history" not in st.session_state:
-    st.session_state.question_history = []
  
 #Question
 default_question = st.session_state.get("default_question", "")
@@ -71,12 +68,8 @@ if sql:
     selected_outputs.append("sql")
 if chart:
     selected_outputs.append("chart")
-if table_option:
-    selected_outputs.append("table")
-
-if st.button("🗑️ Start New Conversation"):#LK
-    st.session_state.question_history = []
-    st.rerun()
+if summary:
+    selected_outputs.append("summary")
  
 #TF
 #Ask Button
@@ -92,8 +85,8 @@ if ask_clicked:
         try:
             with st.spinner("Generating and running your query..."):
  
-                schema = backend.get_schema_text() #LK + LF
-                generated_sql = backend.generate_sql(question, schema, conversation_history=st.session_state.question_history)#LK
+                schema = get_schema_text() #LF
+                generated_sql = generate_sql(question, schema)
  
                 if not backend.is_safe(generated_sql):
                     st.error("The generated query was rejected for safety.")
@@ -116,9 +109,6 @@ if ask_clicked:
                 st.session_state.results = results
                 st.session_state.related_sql = related_sql#LK
                 st.session_state.related_results = related_results#LK
- 
-                
-                st.session_state.question_history.append(question)#LK
  
                 st.switch_page("pages/Results.py")
  
